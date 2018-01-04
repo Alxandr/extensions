@@ -5,7 +5,7 @@ const BOURBON_PATH = require('bourbon').includePaths;
 // eslint-disable-next-line
 export const roc = {
     required: {
-        'roc-plugin-style-css': '^1.0.0-beta.5',
+        'roc-plugin-style-css': '^2.0.0-alpha.0',
     },
     config: {
         settings: {
@@ -21,27 +21,34 @@ export const roc = {
             build: {
                 sass: {
                     useBourbon: {
-                        description: 'If Bourbon should be made available to include easily with `@import "bourbon";`.',
+                        description:
+                            'If Bourbon should be made available to include easily with `@import "bourbon";`.',
                         validator: required(isBoolean),
                     },
                 },
             },
         },
     },
-    actions: [{
-        extension: 'roc-plugin-style-css',
-        hook: 'add-style',
-        description: 'Adds Sass support to Webpack.',
-        action: ({ context: { config: { settings } } }) => () => () => {
-            const params = [
-                settings.build.sass.useBourbon ? `includePaths[]=${BOURBON_PATH}` : '',
-                settings.build.style.sourceMap ? 'sourceMap' : '',
-            ].filter(v => v).join('&');
+    actions: [
+        {
+            extension: 'roc-plugin-style-css',
+            hook: 'add-style',
+            description: 'Adds Sass support to Webpack.',
+            action: ({ context: { config: { settings } } }) => () => () => {
+                const params = [
+                    settings.build.sass.useBourbon
+                        ? `includePaths[]=${BOURBON_PATH}`
+                        : '',
+                    settings.build.style.sourceMap ? 'sourceMap' : '',
+                ]
+                    .filter(v => v)
+                    .join('&');
 
-            return {
-                extensions: ['sass', 'scss'],
-                loaders: `${require.resolve('sass-loader')}?${params}`,
-            };
+                return {
+                    extensions: ['sass', 'scss'],
+                    loaders: `${require.resolve('sass-loader')}?${params}`,
+                };
+            },
         },
-    }],
+    ],
 };

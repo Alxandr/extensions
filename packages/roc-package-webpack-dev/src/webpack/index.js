@@ -1,7 +1,13 @@
 import { join } from 'path';
 
 import { underline } from 'chalk';
-import { getSettings, getAbsolutePath, fileExists, getResolveRequest, initLog } from 'roc';
+import {
+    getSettings,
+    getAbsolutePath,
+    fileExists,
+    getResolveRequest,
+    initLog,
+} from 'roc';
 import { getValueFromPotentialObject } from 'roc-abstract-package-base-dev';
 import webpack from 'webpack';
 
@@ -25,8 +31,8 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
     const newWebpackConfig = { ...webpackConfig };
     const buildSettings = getSettings('build');
 
-    const DEV = (buildSettings.mode === 'dev');
-    const DIST = (buildSettings.mode === 'dist');
+    const DEV = buildSettings.mode === 'dev';
+    const DIST = buildSettings.mode === 'dist';
 
     // Use process.env.NODE_ENV as ENV and fallback to use the mode if not defined
     let ENV = process.env.NODE_ENV;
@@ -39,12 +45,20 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
         }
     }
 
-    const entry = getAbsolutePath(getValueFromPotentialObject(buildSettings.input, target));
-    const outputPath = getAbsolutePath(getValueFromPotentialObject(buildSettings.output, target));
+    const entry = getAbsolutePath(
+        getValueFromPotentialObject(buildSettings.input, target),
+    );
+    const outputPath = getAbsolutePath(
+        getValueFromPotentialObject(buildSettings.output, target),
+    );
     const outputName = getValueFromPotentialObject(buildSettings.name, target);
 
     if (!fileExists(entry)) {
-        log.small.warn(`Could not find the entry file for ${underline(target)} at ${underline(entry)}`);
+        log.small.warn(
+            `Could not find the entry file for ${underline(
+                target,
+            )} at ${underline(entry)}`,
+        );
 
         return {};
     }
@@ -54,22 +68,20 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
     }
 
     /**
-    * Entry
-    */
+     * Entry
+     */
     newWebpackConfig.entry = {
-        [outputName]: [
-            entry,
-        ],
+        [outputName]: [entry],
     };
 
     /**
-    * Devtool
-    */
+     * Devtool
+     */
     newWebpackConfig.devtool = 'source-map';
 
     /**
-    * Output
-    */
+     * Output
+     */
     newWebpackConfig.output = {
         path: outputPath,
         filename: '[name].js',
@@ -78,54 +90,49 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
     };
 
     /**
-    * Loaders
-    */
+     * Loaders
+     */
 
     // Base
     newWebpackConfig.module = {
-        preLoaders: [],
-        loaders: [],
+        rules: [],
     };
 
     // JS LOADER
     const jsLoader = {
-        id: 'babel',
         test: /\.js$/,
-        loader: require.resolve('babel-loader'),
-        query: {
-            ...babelConfig,
-            cacheDirectory: true,
-        },
         include: runThroughBabel,
-    };
-
-    newWebpackConfig.module.loaders.push(jsLoader);
-
-    // JSON LOADER
-    const jsonLoader = {
-        test: /\.json$/,
-        loader: require.resolve('json-loader'),
-    };
-
-    newWebpackConfig.module.loaders.push(jsonLoader);
-
-    /**
-    * Resolve
-    */
-    newWebpackConfig.resolve = {
-        fallback: [],
-        extensions: ['', '.js'],
-    };
-
-    newWebpackConfig.resolveLoader = {
-        root: [
-            join(__dirname, '..', '..', 'node_modules'),
+        use: [
+            {
+                loader: require.resolve('babel-loader'),
+                options: {
+                    ...babelConfig,
+                    cacheDirectory: true,
+                },
+            },
         ],
     };
 
+    newWebpackConfig.module.rules.push(jsLoader);
+
     /**
-    * Plugins
-    */
+     * Resolve
+     */
+    newWebpackConfig.resolve = {
+        extensions: ['.js'],
+        modules: ['node_modules'],
+        alias: {},
+    };
+
+    newWebpackConfig.resolveLoader = {
+        modules: ['node_modules', join(__dirname, '..', '..', 'node_modules')],
+        extensions: ['.js', '.json'],
+        mainFields: ['loader', 'main'],
+    };
+
+    /**
+     * Plugins
+     */
     newWebpackConfig.plugins = [];
 
     newWebpackConfig.plugins.push(
@@ -137,7 +144,7 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
             __DEV__: DEV,
             __DIST__: DIST,
             __CWD__: JSON.stringify(process.cwd()),
-        })
+        }),
     );
 
     if (DIST) {
@@ -147,7 +154,7 @@ export default () => (target, babelConfig) => (webpackConfig = {}) => {
 
         newWebpackConfig.plugins.push(
             new webpack.optimize.DedupePlugin(),
-            new webpack.optimize.OccurenceOrderPlugin()
+            new webpack.optimize.OccurrenceOrderPlugin(),
         );
     }
 

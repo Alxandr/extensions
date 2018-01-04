@@ -4,34 +4,52 @@ import jest from 'jest';
 import { invokeHook } from '../roc/util';
 
 export default ({ context }) => (targets, managedOptions, extraArgs = []) => {
-    if (targets.find((target) => target === 'web' || target === 'node')) {
+    if (targets.find(target => target === 'web' || target === 'node')) {
         return () => {
             process.env.ROC_INITAL_ARGV = JSON.stringify(process.argv);
             let argv = [...extraArgs];
 
             // TODO - Make it not depend on Webpack but work in any project
-            const webpackConfig = invokeHook('build-webpack', 'node', {});
-            const globals = webpackConfig.plugins.reduce((definitions, plugin) => {
-                if (plugin.definitions) {
-                    return {
-                        ...definitions,
-                        ...plugin.definitions,
-                    };
-                }
+            /* eslint-disable no-unused-vars */
+            const { rocMetaInfo: _, ...webpackConfig } = invokeHook(
+                'build-webpack',
+                'node',
+                {},
+            );
+            /* eslint-enable no-unused-vars */
+            const globals = webpackConfig.plugins.reduce(
+                (definitions, plugin) => {
+                    if (plugin.definitions) {
+                        return {
+                            ...definitions,
+                            ...plugin.definitions,
+                        };
+                    }
 
-                return definitions;
-            }, {});
+                    return definitions;
+                },
+                {},
+            );
 
             // TODO - Make this smarter and give more out of the box
             let jestConfig = {
-                moduleFileExtensions: webpackConfig.resolve.extensions.map((extn) => extn.replace('.', '')),
-                testPathIgnorePatterns: ['<rootDir>/(lib|build|docs|node_modules)/'],
+                moduleFileExtensions: webpackConfig.resolve.extensions.map(
+                    extn => extn.replace('.', ''),
+                ),
+                testPathIgnorePatterns: [
+                    '<rootDir>/(lib|build|docs|node_modules)/',
+                ],
                 // TODO - Handle this better
                 // Currently it will always use node as testEnvironment if not explicitly defined
                 // to be web
-                testEnvironment: targets[0] === 'web' && targets.length === 1 ? 'jsdom' : 'node',
+                testEnvironment:
+                    targets[0] === 'web' && targets.length === 1
+                        ? 'jsdom'
+                        : 'node',
                 transform: {
-                    '^.+\\.js$': require.resolve('./utils/babel-jest-transformer.js'),
+                    '^.+\\.js$': require.resolve(
+                        './utils/babel-jest-transformer.js',
+                    ),
                 },
                 // TODO - Support webpackConfig.resolve.alias
                 resolver: require.resolve('./utils/roc-resolver.js'),
@@ -44,7 +62,7 @@ export default ({ context }) => (targets, managedOptions, extraArgs = []) => {
                 };
                 process.env.JEST_JUNIT_OUTPUT = getAbsolutePath(
                     context.config.settings.test.jest.junit.path,
-                    context.directory
+                    context.directory,
                 );
                 process.env.JEST_USE_PATH_FOR_SUITE_NAME = true;
             }
@@ -69,8 +87,14 @@ export default ({ context }) => (targets, managedOptions, extraArgs = []) => {
             }
 
             argv.push('--config', JSON.stringify(jestConfig));
-            argv = argv.concat(Object.keys(managedOptions)
-                .map((key) => managedOptions[key] !== undefined && `--${key}=${managedOptions[key]}`))
+            argv = argv
+                .concat(
+                    Object.keys(managedOptions).map(
+                        key =>
+                            managedOptions[key] !== undefined &&
+                            `--${key}=${managedOptions[key]}`,
+                    ),
+                )
                 .filter(Boolean);
 
             jest.run(argv);

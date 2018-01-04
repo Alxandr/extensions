@@ -4,12 +4,12 @@ module.exports = {
             targets: ['cjs'],
             babelPresetEnv: {
                 targets: {
-                    node: '6',
+                    node: '9',
                 },
             },
             mono: [
                 // Examples are disabled for now
-                //'examples/*',
+                // 'examples/*',
                 'packages',
                 'plugins',
             ],

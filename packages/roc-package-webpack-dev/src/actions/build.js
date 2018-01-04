@@ -2,7 +2,10 @@ import { initLog } from 'roc';
 import MultiProgress from 'multi-progress';
 import pretty from 'prettysize';
 import { bold } from 'chalk';
-import { cleanPromise, getValueFromPotentialObject } from 'roc-abstract-package-base-dev';
+import {
+    cleanPromise,
+    getValueFromPotentialObject,
+} from 'roc-abstract-package-base-dev';
 import webpack from 'webpack';
 
 import { invokeHook, name, version } from '../roc/util';
@@ -11,7 +14,7 @@ const multi = new MultiProgress();
 
 const log = initLog(name, version);
 
-const handleCompletion = (results) => {
+const handleCompletion = results => {
     log.small.log('');
     log.small.success('Webpack build completed!');
     log.small.log('');
@@ -33,11 +36,7 @@ const handleCompletion = (results) => {
 const handleError = ({ error, target }) => {
     const errorMessage = target ? ` for ${bold(target)}` : '';
     log.small.log('');
-    log.large.error(
-        `Build failed${errorMessage}.`,
-        'Webpack Problem',
-        error
-    );
+    log.large.error(`Build failed${errorMessage}.`, 'Webpack Problem', error);
 };
 
 const build = (webpackConfig, target, config, verbose) => {
@@ -52,27 +51,33 @@ const build = (webpackConfig, target, config, verbose) => {
                 const compiler = webpack(webpackConfig);
 
                 if (process.stdout.isTTY && !config.build.disableProgressbar) {
-                    const bar = multi.newBar(`Building ${target} [:bar] :percent :elapsed s :webpackInfo`, {
-                        complete: '=',
-                        incomplete: ' ',
-                        total: 100,
-                        // Some "magic" math to make sure that the progress bar fits in the terminal window
-                        // Based on the lenght of various strings used in the output
-                        width: (process.stdout.columns - 52),
-                    });
+                    const bar = multi.newBar(
+                        `Building ${target} [:bar] :percent :elapsed s :webpackInfo`,
+                        {
+                            complete: '=',
+                            incomplete: ' ',
+                            total: 100,
+                            // Some "magic" math to make sure that the progress bar fits in the terminal window
+                            // Based on the lenght of various strings used in the output
+                            width: process.stdout.columns - 52,
+                        },
+                    );
 
-                    compiler.apply(new webpack.ProgressPlugin((percentage, msg) => {
-                        bar.update(percentage, {
-                            // Only use 20 characters for output to make sure it fits in the window
-                            webpackInfo: msg.substring(0, 20),
-                        });
-                    }));
+                    compiler.apply(
+                        new webpack.ProgressPlugin((percentage, msg) => {
+                            bar.update(percentage, {
+                                // Only use 20 characters for output to make sure it fits in the window
+                                webpackInfo: msg.substring(0, 20),
+                            });
+                        }),
+                    );
                 } else {
                     // We print a short message when the progressbar is not used
                     console.log(`Building ${target}, please be patient...`);
                 }
 
                 compiler.run((error, stats) => {
+                    debugger;
                     if (error) {
                         return reject({
                             error,
@@ -94,7 +99,7 @@ const build = (webpackConfig, target, config, verbose) => {
                     return resolve({ stats, target });
                 });
             })
-        .catch(err => log.small.error('An error happened.', err));
+            .catch(err => log.small.error('An error happened.', err));
     });
 };
 
@@ -105,24 +110,37 @@ const build = (webpackConfig, target, config, verbose) => {
  *
  * @returns {Function} - A correct Roc action.
  */
-export default ({ context: { verbose, config: { settings } } }) => (targets) => () => {
+export default ({
+    context: { verbose, config: { settings } },
+}) => targets => () => {
     const webpackTargets = invokeHook('get-webpack-targets');
 
-    const validTargets = targets.filter((target) => webpackTargets.some((webpackTarget) => webpackTarget === target));
+    const validTargets = targets.filter(target =>
+        webpackTargets.some(webpackTarget => webpackTarget === target),
+    );
 
     if (validTargets.length === 0) {
         return () => Promise.resolve();
     }
 
-    log.small.log(`Starting the builder using "${settings.build.mode}" as the mode.\n`);
+    log.small.log(
+        `Starting the builder using "${settings.build.mode}" as the mode.\n`,
+    );
 
-    const promises = validTargets.map((target) => {
+    const promises = validTargets.map(target => {
         const babelConfig = invokeHook('babel-config', target);
-        const webpackConfig = invokeHook('build-webpack', target, babelConfig);
+        /* eslint-disable no-unused-vars */
+        const { rocMetaInfo: _, ...webpackConfig } = invokeHook(
+            'build-webpack',
+            target,
+            babelConfig,
+        );
+        /* eslint-enable no-unused-vars */
         return build(webpackConfig, target, settings, verbose);
     });
 
-    return () => Promise.all(promises)
-        .then(handleCompletion)
-        .catch(handleError);
+    return () =>
+        Promise.all(promises)
+            .then(handleCompletion)
+            .catch(handleError);
 };

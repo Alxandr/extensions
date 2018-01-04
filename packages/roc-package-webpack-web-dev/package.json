@@ -1,6 +1,6 @@
 {
   "name": "roc-package-webpack-web-dev",
-  "version": "1.0.1-alpha.0",
+  "version": "2.0.0-alpha.0",
   "description": "Package providing browser support through Webpack for Roc (Development)",
   "main": "lib/index.js",
   "files": [
@@ -28,9 +28,10 @@
     "koa-webpack-dev-middleware": "~1.1.0",
     "qs": "~6.1.0",
     "roc": "^1.0.0-rc.23",
-    "roc-package-webpack-dev": "^1.1.0-alpha.0",
-    "webpack": "~1.12.2",
-    "webpack-hot-middleware": "~2.10.0"
+    "roc-package-webpack-dev": "^2.0.0-alpha.0",
+    "webpack": "~3.10.0",
+    "webpack-hot-middleware": "~2.21.0",
+    "uglifyjs-webpack-plugin": "~1.1.5"
   },
   "roc": {
     "packages": [

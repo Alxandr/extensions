@@ -6,12 +6,12 @@
   "author": "Schibsted",
   "license": "MIT",
   "scripts": {
-    "dev": "roc dev --runtime-applicationName 'Simple Example'"
+    "dev": "roc dev"
   },
   "dependencies": {
-    "roc-package-web-app-react": "^1.0.0"
+    "roc-package-web-app-react": "^2.0.0-alpha.0"
   },
   "devDependencies": {
-      "roc-package-web-app-react-dev": "^1.0.0"
+      "roc-package-web-app-react-dev": "^2.0.0-alpha.0"
   }
 }

@@ -1,0 +1,6 @@
+{
+    "sortImports.onSave": false,
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/alxandr/.platformio/penv/bin:/usr/local/share/dotnet:/Users/alxandr/hub/git-commands/bin:/Users/alxandr/go/bin:/usr/local/opt/go/libexec/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
+    }
+}

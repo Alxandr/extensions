@@ -11,9 +11,9 @@
     "start": "roc start"
   },
   "dependencies": {
-    "roc-package-web-app": "^1.0.0"
+    "roc-package-web-app": "^2.0.0-alpha.0"
   },
   "devDependencies": {
-    "roc-package-web-app-dev": "^1.0.0"
+    "roc-package-web-app-dev": "^2.0.0-alpha.0"
   }
 }

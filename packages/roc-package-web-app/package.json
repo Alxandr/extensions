@@ -1,6 +1,6 @@
 {
   "name": "roc-package-web-app",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha.0",
   "description": "Package for building web applications using Roc",
   "main": "lib/index.js",
   "files": [
@@ -42,8 +42,8 @@
     "koa-static": "~2.0.0",
     "lodash": "4.13.1",
     "roc": "^1.0.0-rc.23",
-    "roc-package-webpack-node": "^1.0.0",
-    "roc-package-webpack-web": "^1.0.0"
+    "roc-package-webpack-node": "^2.0.0-alpha.0",
+    "roc-package-webpack-web": "^2.0.0-alpha.0"
   },
   "roc": {
     "packages": [

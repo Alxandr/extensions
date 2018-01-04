@@ -1,6 +1,6 @@
 {
   "name": "roc-package-webpack-dev",
-  "version": "1.1.0-alpha.0",
+  "version": "2.0.0-alpha.0",
   "description": "Package providing Webpack support for Roc (Development)",
   "main": "lib/index.js",
   "files": [
@@ -27,6 +27,7 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-1": "^6.24.1",
+    "babel-runtime": "^6.24.1",
     "chalk": "~1.1.1",
     "dev-ip": "~1.0.1",
     "json-loader": "~0.5.3",
@@ -38,8 +39,8 @@
     "roc": "^1.0.0-rc.23",
     "roc-abstract-package-base-dev": "^1.0.0",
     "roc-plugin-babel": "^1.0.0",
-    "webpack": "~1.12.2",
-    "webpack-merge": "0.14.0"
+    "webpack": "~3.10.0",
+    "webpack-merge": "4.1.1"
   },
   "roc": {
     "packages": [

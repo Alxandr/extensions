@@ -9,7 +9,10 @@ import { invokeHook } from '../roc/util';
 
 import cssPipeline from './pipeline';
 
-export default ({ context: { config: { settings } }, previousValue: webpackConfig }) => (target) => () => {
+export default ({
+    context: { config: { settings } },
+    previousValue: webpackConfig,
+}) => target => () => {
     const newWebpackConfig = { ...webpackConfig };
 
     const DEV = settings.build.mode === 'dev';
@@ -19,15 +22,17 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
     const sourceMap = settings.build.style.sourceMap;
     const minimize = settings.build.style.minimize;
 
-    const getGlobalStylePaths = (toMatch) => {
+    const getGlobalStylePaths = toMatch => {
         if (WEB && settings.build.resources) {
-            return settings.build.resources.map((path) => {
-                if (toMatch.test(path)) {
-                    return getAbsolutePath(path);
-                }
+            return settings.build.resources
+                .map(path => {
+                    if (toMatch.test(path)) {
+                        return getAbsolutePath(path);
+                    }
 
-                return undefined;
-            }).filter((path) => path !== undefined);
+                    return undefined;
+                })
+                .filter(path => path !== undefined);
         }
 
         return [];
@@ -36,40 +41,51 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
     // Get extensions and loaders
     const styles = [{ extensions: ['css'], loaders: [] }];
     invokeHook('add-style')(({ extensions, loaders }) => {
-        styles.push({ extensions: [].concat(extensions), loaders: [].concat(loaders) });
+        styles.push({
+            extensions: [].concat(extensions),
+            loaders: [].concat(loaders),
+        });
     });
 
     let preLoaders = [];
-    invokeHook('add-style-preloaders')((loaders) => {
+    invokeHook('add-style-preloaders')(loaders => {
         preLoaders = preLoaders.concat(loaders);
     });
+
+    // setup postcss plugins
+    const postcssPlugins = [autoprefixer(settings.build.style.autoprefixer)];
 
     // Create a seperate pipeline for each `add-style` invocation
     styles.forEach(({ extensions, loaders }) => {
         // We allow stylesheet files to end with a query string
-        const toMatch = new RegExp(extensions.map((extension) => `\\.${extension}(\\?.*)?$`).join('|'));
+        const toMatch = new RegExp(
+            extensions.map(extension => `\\.${extension}(\\?.*)?$`).join('|'),
+        );
         const globalStylePaths = getGlobalStylePaths(toMatch);
 
         // Create general style loader
-        const loader = NODE ?
-            'css-loader/locals' :
-            'css-loader';
-        const styleLoader = (cssModules) => cssPipeline(
-            loader,
-            loaders,
-            DIST,
-            sourceMap,
-            cssModules,
-            preLoaders,
-            minimize
-        );
+        const loader = NODE ? 'css-loader/locals' : 'css-loader';
+        const styleLoader = cssModules =>
+            cssPipeline(
+                loader,
+                loaders,
+                DIST,
+                sourceMap,
+                cssModules,
+                preLoaders,
+                minimize,
+                postcssPlugins,
+            );
 
         // Add CSS Modules loader
-        newWebpackConfig.module.loaders.push({
-            test: (absPath) => {
+        newWebpackConfig.module.rules.push({
+            test: absPath => {
                 if (
-                    globalStylePaths.indexOf(absPath) === -1 && toMatch.test(absPath) &&
-                    (settings.build.style.modules || /\?modules$/.test(absPath) || /\?modules=true$/.test(absPath))
+                    globalStylePaths.indexOf(absPath) === -1 &&
+                    toMatch.test(absPath) &&
+                    (settings.build.style.modules ||
+                        /\?modules$/.test(absPath) ||
+                        /\?modules=true$/.test(absPath))
                 ) {
                     // We do not want to enable CSS modules if disabled
                     if (/\?modules=false$/.test(absPath)) {
@@ -81,21 +97,29 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
 
                 return false;
             },
-            loader: WEB ?
-                ExtractTextPlugin.extract(require.resolve('style-loader'), styleLoader(true)) :
-                styleLoader(true),
+            use: WEB
+                ? ExtractTextPlugin.extract({
+                      fallback: require.resolve('style-loader'),
+                      use: styleLoader(true),
+                  })
+                : styleLoader(true),
         });
 
         // Create global style loader
         if (WEB) {
-            newWebpackConfig.module.loaders.push({
-                test: (absPath) => {
+            newWebpackConfig.module.rules.push({
+                test: absPath => {
                     if (
-                        globalStylePaths.indexOf(absPath) === -1 && toMatch.test(absPath) &&
-                        (!settings.build.style.modules || /\?modules=false$/.test(absPath))
+                        globalStylePaths.indexOf(absPath) === -1 &&
+                        toMatch.test(absPath) &&
+                        (!settings.build.style.modules ||
+                            /\?modules=false$/.test(absPath))
                     ) {
                         // We do not want to process as global CSS if modules is enabled for the specific file
-                        if (/\?modules$/.test(absPath) || /\?modules=true$/.test(absPath)) {
+                        if (
+                            /\?modules$/.test(absPath) ||
+                            /\?modules=true$/.test(absPath)
+                        ) {
                             return false;
                         }
 
@@ -108,7 +132,10 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
 
                     return false;
                 },
-                loader: ExtractTextPlugin.extract(require.resolve('style-loader'), styleLoader(false)),
+                use: ExtractTextPlugin.extract({
+                    fallback: require.resolve('style-loader'),
+                    use: styleLoader(false),
+                }),
             });
         } else {
             newWebpackConfig.externals.unshift((context, request, callback) => {
@@ -121,21 +148,31 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
             });
 
             if (settings.build.style.modules) {
-                const makeNoop = new RegExp(extensions
-                    .map((extension) => `\\.${extension}\\?modules=false$`).join('|')
+                const makeNoop = new RegExp(
+                    extensions
+                        .map(extension => `\\.${extension}\\?modules=false$`)
+                        .join('|'),
                 );
                 newWebpackConfig.plugins.push(
-                    new webpack.NormalModuleReplacementPlugin(makeNoop, require.resolve('node-noop'))
+                    new webpack.NormalModuleReplacementPlugin(
+                        makeNoop,
+                        require.resolve('node-noop'),
+                    ),
                 );
             } else {
                 // The difference here from above is that we will take files without a query string and
                 // ones that have disabled explicitly
                 // This means that we are not fully correct, should be fixed in the future
-                const makeNoop = new RegExp(extensions
-                    .map((extension) => `\\.${extension}(|\\?modules=false)$`).join('|')
+                const makeNoop = new RegExp(
+                    extensions
+                        .map(extension => `\\.${extension}(|\\?modules=false)$`)
+                        .join('|'),
                 );
                 newWebpackConfig.plugins.push(
-                    new webpack.NormalModuleReplacementPlugin(makeNoop, require.resolve('node-noop'))
+                    new webpack.NormalModuleReplacementPlugin(
+                        makeNoop,
+                        require.resolve('node-noop'),
+                    ),
                 );
             }
         }
@@ -143,24 +180,24 @@ export default ({ context: { config: { settings } }, previousValue: webpackConfi
         // Update resolve extensions
         newWebpackConfig.resolve = {
             ...newWebpackConfig.resolve,
-            extensions: newWebpackConfig.resolve.extensions.concat(extensions.map((extension) => `.${extension}`)),
+            extensions: newWebpackConfig.resolve.extensions.concat(
+                extensions.map(extension => `.${extension}`),
+            ),
         };
     });
 
-    // Configure autoprefixer
-    newWebpackConfig.postcss = [
-        autoprefixer(settings.build.style.autoprefixer),
-    ];
-
     // Configure ExtractTextPlugin
     newWebpackConfig.plugins.push(
-        new ExtractTextPlugin(settings.build.style.name, {
+        new ExtractTextPlugin({
+            filename: settings.build.style.name,
             disable: WEB && DEV,
-        })
+        }),
     );
 
     // We want to be able to use the css-loader in projects without the user needing to install them directly.
-    newWebpackConfig.resolveLoader.root.push(join(__dirname, '../../node_modules'));
+    newWebpackConfig.resolveLoader.modules.push(
+        join(__dirname, '../../node_modules'),
+    );
 
     return newWebpackConfig;
 };

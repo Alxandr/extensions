@@ -24,7 +24,7 @@
   "dependencies": {
     "roc": "^1.0.0-rc.23",
     "roc-package-module": "^1.0.0",
-    "roc-package-webpack-web": "^1.0.0"
+    "roc-package-webpack-web": "^2.0.0-alpha.0"
   },
   "roc": {
     "packages": [

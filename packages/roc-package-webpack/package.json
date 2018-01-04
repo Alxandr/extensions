@@ -1,6 +1,6 @@
 {
   "name": "roc-package-webpack",
-  "version": "1.0.0",
+  "version": "2.0.0-alpha.0",
   "description": "Package providing Webpack support for Roc",
   "main": "lib/index.js",
   "files": [
@@ -20,7 +20,8 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "roc-abstract-package-base": "^1.0.0"
+    "roc-abstract-package-base": "^1.0.0",
+    "babel-runtime": "^6.24.1"
   },
   "roc": {
     "packages": [
